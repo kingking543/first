@@ -1,0 +1,93 @@
+{
+  "source": "中国体彩网公开历史接口",
+  "pages": [
+    {
+      "page": 1,
+      "url": "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=100&isVerify=1&pageNo=1",
+      "sha256": "e5fa2d1a0b34253a717d8af4715e3181099813136045dd4839bbf467dd4a63d5",
+      "rows": 100,
+      "latest": "26123",
+      "oldest": "26024"
+    },
+    {
+      "page": 2,
+      "url": "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=100&isVerify=1&pageNo=2",
+      "sha256": "5202e100faa056ead4c12a8de74633f1a8608460c366018d5fb4979cf6e18470",
+      "rows": 100,
+      "latest": "26023",
+      "oldest": "25074"
+    },
+    {
+      "page": 3,
+      "url": "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=100&isVerify=1&pageNo=3",
+      "sha256": "2389ee01a92b533ef3005908e2fa2a9f7de50a045f23a457b939f1e5d4bd046d",
+      "rows": 100,
+      "latest": "25073",
+      "oldest": "24126"
+    },
+    {
+      "page": 4,
+      "url": "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=100&isVerify=1&pageNo=4",
+      "sha256": "0388cd76d4860d9e31cbae3587df8b7586402cca6e08ea5df87425d2d70ea13e",
+      "rows": 100,
+      "latest": "24125",
+      "oldest": "24026"
+    },
+    {
+      "page": 5,
+      "url": "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=100&isVerify=1&pageNo=5",
+      "sha256": "bb7e14238f721480ed33f8d1fcaa519459eb83aaa2d89309888bfa950c7dba96",
+      "rows": 100,
+      "latest": "24025",
+      "oldest": "23076"
+    },
+    {
+      "page": 6,
+      "url": "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=100&isVerify=1&pageNo=6",
+      "sha256": "81d65224512254962590c477c817dfa02a3576ca3d27ee7c0e6f93c4188793f9",
+      "rows": 100,
+      "latest": "23075",
+      "oldest": "22126"
+    },
+    {
+      "page": 7,
+      "url": "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=100&isVerify=1&pageNo=7",
+      "sha256": "e1a10d6d3076125a428159d4c75d8cca5141f6b3a9fd4ed89ccdaf59c158fa7e",
+      "rows": 100,
+      "latest": "22125",
+      "oldest": "22026"
+    },
+    {
+      "page": 8,
+      "url": "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=100&isVerify=1&pageNo=8",
+      "sha256": "d625e1c1b0b9bbd2dc3ff4c7f9d2bae2fc99b7b08c7261428119a14a6a444f93",
+      "rows": 100,
+      "latest": "22025",
+      "oldest": "21076"
+    },
+    {
+      "page": 9,
+      "url": "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=100&isVerify=1&pageNo=9",
+      "sha256": "5f59760422178b159e663049d31692e48d15d4effc52888d43883f54023bf69d",
+      "rows": 100,
+      "latest": "21075",
+      "oldest": "20110"
+    },
+    {
+      "page": 10,
+      "url": "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=100&isVerify=1&pageNo=10",
+      "sha256": "b716f400106d056f5c08d3ed2991b1c41c4cd8a401f7cdf0742ff36507f79620",
+      "rows": 100,
+      "latest": "20109",
+      "oldest": "20010"
+    },
+    {
+      "page": 11,
+      "url": "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=100&isVerify=1&pageNo=11",
+      "sha256": "8f5e1b46581687f68da8ddcb84f96930044ad801b1b02cf036b1112cf6fc3f92",
+      "rows": 100,
+      "latest": "20009",
+      "oldest": "19060"
+    }
+  ]
+}

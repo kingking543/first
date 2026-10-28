@@ -1,0 +1,24 @@
+{
+  "analysisPackages": {
+    "numpy": "2.5.4",
+    "matplotlib": "3.11.2"
+  },
+  "node": "v24.14.0",
+  "python": "3.12.14",
+  "files": {
+    "scripts/research/baseline-lotto.ts": "88752debf93c50d3c9db2571b7496e33a0c5db579c8a9fd734d1ef7abbed73be",
+    "scripts/backtest.test.ts": "fae5d4cf248f5fa139d32acebea31580d0c79d7e30b0ae107ccc0440c71070ec",
+    "scripts/research/backtest-lib.ts": "c5a377f62cecbc18aad01b412231941e83e290eb3afe4a773ee56755e2780890",
+    "scripts/research/render-backtest-report.py": "4ad68b114d12a55c89e84fdbe5e06178b99e3095aee0f0dba5e645e58438ded9",
+    "scripts/research/requirements.txt": "af9c9ea6a882ecdb9816a50416e4e777ff38447e9caf3b8e4c630ce2f227d324",
+    "scripts/research/check-quantified-v2.ts": "d46908f1b59aa282c23408c7a599a88e846b612c66899cb14583a5bb22c2f1be",
+    "scripts/research/analyze-backtest.py": "34cd9d18e8015932f262f0ad96e67770f417f37e47e26e2f7ec9d2032f21034e",
+    "scripts/research/run-backtest.ts": "9db6ad516777dce64a1dfbae6a42f3125dbde4f59daf6f5856b9105eabb8523b",
+    "reports/backtest-2026-10-28/protocol.md": "7c06a103108aedfb2a381e9d3b421a315ec215a08db39ef6c0f02b6c456c82df",
+    "reports/backtest-2026-10-28/results.json": "832ed22f52d0a3c2186077b0d5197ecd714de74b8c63b5fd9b64abac1fc86b0f",
+    "reports/backtest-2026-10-28/analysis.json": "2e357b5d3329646d2d54f619fe105736aab32d732dd547486ff1cf81c2313b43",
+    "reports/backtest-2026-10-28/data/history.json": "fc345d7ca7edd5e25b3fa196af7d40a8e5cc8551c470eff72c89b0badb1fa0b8",
+    "reports/backtest-2026-10-28/data/manifest.json": "d29b48900dc93c2f42d73f0c4f3c73a8a44bfcce300914cb24b1b096b9893c96"
+  },
+  "note": "No changes to production generator/UI. Protocol fixed internally before results; not external preregistration. history.fetchedAt is normalization time."
+}

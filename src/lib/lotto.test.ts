@@ -1,16 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { appendGeneratedHistory, buildHotNumbers, formatLottoSet, generateLottoSets, parseGeneratedHistory, scoreFrontNumbers } from './lotto.ts';
+import { appendGeneratedHistory, buildHotNumbers, formatLottoSet, generateLottoSets, parseGeneratedHistory, scoreRuleConformity } from './lotto.ts';
 import type { LottoSet } from './lotto.ts';
 
 const saved: LottoSet = { id: 'saved', front: [5, 12, 18, 24, 31], back: [4, 9], timestamp: 1700000000000, isSmart: true, score: 100 };
 const hot = new Set([5, 12, 18, 24, 31, 2, 8, 15, 22, 33]);
 
-test('retains the existing sum, odd/even, hot/cold and consecutive scoring rules', () => {
-  assert.equal(scoreFrontNumbers([5, 12, 18, 24, 31], new Set([5, 12])), 100);
-  assert.equal(scoreFrontNumbers([5, 12, 18, 24, 31], hot), 85);
-  assert.equal(scoreFrontNumbers([1, 2, 3, 4, 5], new Set([1, 2, 3])), 50);
-  assert.equal(scoreFrontNumbers([1, 3, 5, 7, 9], new Set()), 40);
+test('rule conformity grades shape, weak history reference and final batch overlap', () => {
+  const set={front:[5,12,18,24,31],back:[4,9]};
+  assert.equal(scoreRuleConformity(set,new Set([5,12])),100);
+  assert.equal(scoreRuleConformity(set,hot),97);
+  assert.equal(scoreRuleConformity(set,new Set([5,12]),[{...set}]),80);
+  assert.equal(scoreRuleConformity({front:[1,2,3,4,5],back:[1,2]},new Set()),51);
 });
 
 test('builds a reusable top-ten hot-number lookup', () => {
@@ -29,14 +30,15 @@ test('generates unique sorted in-range zones even for a constant random source',
   assert.equal(sets[0].isSmart, false);
 });
 
-test('generates five independent records and retains smart-mode rule scores', () => {
+test('generates five jointly selected valid records with versioned conformity scores', () => {
   let seed = 42;
   const random = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
   const sets = generateLottoSets(5, true, hot, random);
   assert.equal(sets.length, 5);
   assert.equal(new Set(sets.map(s => s.id)).size, 5);
   for (const set of sets) {
-    assert.equal(set.score, 100);
+    assert.equal(set.score, scoreRuleConformity(set,hot,sets.filter(other=>other!==set)));
+    assert.equal(set.scoreVersion,2);
     assert.equal(set.isSmart, true);
     assert.equal(set.front.length, 5);
     assert.equal(new Set(set.front).size, 5);
@@ -85,4 +87,12 @@ test('generation remains available when randomUUID is absent in an older or non-
     if (descriptor) Object.defineProperty(globalThis, 'crypto', descriptor);
     else Reflect.deleteProperty(globalThis, 'crypto');
   }
+});
+
+
+test('new and legacy scores retain their original version across history reload',()=>{
+  const current={...saved,id:'new',score:87,scoreVersion:2 as const};
+  assert.deepEqual(parseGeneratedHistory(JSON.stringify([current,saved])),[current,saved]);
+  const unknown=parseGeneratedHistory(JSON.stringify([{...saved,scoreVersion:999}]));
+  assert.equal(unknown.length,1);assert.equal(unknown[0].scoreVersion,undefined);assert.equal(unknown[0].score,100);
 });

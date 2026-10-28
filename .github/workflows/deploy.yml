@@ -5,7 +5,8 @@ on:
     branches: [main]
   workflow_dispatch:
   schedule:
-    # 22:15 Asia/Shanghai; 23:15 provides a recovery run.
+    # Asia/Shanghai: first attempt 21:45; recovery attempts 22:15 and 23:15.
+    - cron: '45 13 * * *'
     - cron: '15 14,15 * * *'
 
 permissions:

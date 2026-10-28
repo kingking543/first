@@ -5,6 +5,7 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, Copy, RefreshCw, Sparkles, Zap } from 'lucide-react';
+import { scoreLabel } from '../lib/lotto.ts';
 import type { LottoSet } from '../lib/lotto.ts';
 
 interface Props { currentSets: LottoSet[]; isGenerating: boolean; copiedId: string | null; onGenerate: (count: number) => void; onCopy: (set: LottoSet) => void; onCopyAll: () => void; }
@@ -24,10 +25,10 @@ export default function NumberResults({ currentSets, isGenerating, copiedId, onG
                 transition={{ delay: setIdx * 0.1 }}
                 className="relative group"
               >
-                {set.isSmart && (
-                  <div className="absolute -top-3 right-0 sm:-right-4 flex items-center bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100 shadow-sm z-10">
+                {set.isSmart && typeof set.score === 'number' && (
+                  <div aria-label={scoreLabel(set)} title={scoreLabel(set)} className="absolute -top-5 right-0 sm:-right-4 flex items-center bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100 shadow-sm z-10">
                     <Zap className="w-2.5 h-2.5 text-blue-600 mr-1" />
-                    <span className="text-[8px] font-bold text-blue-700">{set.score}</span>
+                    <span className="text-[10px] font-bold text-blue-700">{set.score}分</span>
                   </div>
                 )}
 
@@ -81,7 +82,7 @@ export default function NumberResults({ currentSets, isGenerating, copiedId, onG
           <button
             onClick={() => onGenerate(1)}
             disabled={isGenerating}
-            className="flex-1 sm:flex-none group relative px-6 py-4 bg-[#1A1A1A] text-white rounded-2xl font-bold text-sm sm:text-base shadow-xl shadow-black/10 hover:shadow-black/20 transition-all active:scale-95 disabled:opacity-70 disabled:pointer-events-none flex items-center justify-center"
+            className="flex-1 sm:flex-none group relative whitespace-nowrap px-3 py-4 sm:px-6 bg-[#1A1A1A] text-white rounded-2xl font-bold text-sm sm:text-base shadow-xl shadow-black/10 hover:shadow-black/20 transition-all active:scale-95 disabled:opacity-70 disabled:pointer-events-none flex items-center justify-center"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
             生成一组
@@ -90,7 +91,7 @@ export default function NumberResults({ currentSets, isGenerating, copiedId, onG
           <button
             onClick={() => onGenerate(5)}
             disabled={isGenerating}
-            className="flex-1 sm:flex-none group relative px-6 py-4 bg-blue-600 text-white rounded-2xl font-bold text-sm sm:text-base shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-70 disabled:pointer-events-none flex items-center justify-center"
+            className="flex-1 sm:flex-none group relative whitespace-nowrap px-3 py-4 sm:px-6 bg-blue-600 text-white rounded-2xl font-bold text-sm sm:text-base shadow-xl shadow-blue-200 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-70 disabled:pointer-events-none flex items-center justify-center"
           >
             <Sparkles className="w-4 h-4 mr-2" />
             生成五组
