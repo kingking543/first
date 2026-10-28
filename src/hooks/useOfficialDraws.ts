@@ -1,16 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DrawLoadStatus } from '../lib/draws.ts';
 import bundledData from '../data/official-draws.json';
-import { DRAW_CACHE_KEY, DRAW_COUNT, fetchPublishedSnapshot, parseSnapshot, selectSnapshot, snapshotFreshness } from '../lib/draws.ts';
+import { DRAW_CACHE_KEY, parseSnapshot, selectSnapshot, snapshotFreshness } from '../lib/draws.ts';
+import { syncPublishedSnapshot } from '../lib/draw-sync.ts';
 
 const bundledSnapshot = parseSnapshot(bundledData);
-
 function loadInitialSnapshot() {
-  try {
-    return selectSnapshot(bundledSnapshot, localStorage.getItem(DRAW_CACHE_KEY));
-  } catch {
-    return bundledSnapshot;
-  }
+  try { return selectSnapshot(bundledSnapshot, localStorage.getItem(DRAW_CACHE_KEY)); }
+  catch { return bundledSnapshot; }
 }
 
 export function useOfficialDraws() {
@@ -18,44 +15,59 @@ export function useOfficialDraws() {
   const currentSnapshot = useRef(snapshot);
   const [status, setStatus] = useState<DrawLoadStatus>('syncing');
   const [now, setNow] = useState(Date.now);
+  const refreshAction = useRef<() => void>(() => {});
+  const refresh = useCallback(() => refreshAction.current(), []);
+
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 60000);
     return () => window.clearInterval(timer);
   }, []);
-  const [refreshVersion, setRefreshVersion] = useState(0);
-  const refresh = useCallback(() => setRefreshVersion(version => version + 1), []);
 
   useEffect(() => {
     let active = true;
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 12000);
-    setStatus('syncing');
-    fetchPublishedSnapshot(new URL('data/official-draws.json', document.baseURI).href, controller.signal).then(incoming => {
-      if (!active) return;
-      if (Number(incoming.draws[0].period) < Number(currentSnapshot.current.draws[0].period) ||
-          incoming.draws.length !== DRAW_COUNT) {
-        throw new Error('官方响应早于已保存的开奖数据');
-      }
-      const selected = selectSnapshot(currentSnapshot.current, JSON.stringify(incoming));
-      currentSnapshot.current = selected;
-      setSnapshot(selected);
-      setNow(Date.now());
-      setStatus('live');
+    let lastAttempt = 0;
+    let request: { controller: AbortController; timer: number } | null = null;
+    const sync = async (force = false) => {
+      if (!active || request || (!force && Date.now() - lastAttempt < 5000)) return;
+      lastAttempt = Date.now();
+      const controller = new AbortController();
+      const currentRequest = { controller, timer: window.setTimeout(() => controller.abort(), 12000) };
+      request = currentRequest;
+      setStatus('syncing');
       try {
-        localStorage.setItem(DRAW_CACHE_KEY, JSON.stringify(selected));
+        const incoming = await syncPublishedSnapshot(currentSnapshot.current, document.baseURI, controller.signal);
+        if (!active) return;
+        currentSnapshot.current = incoming;
+        setSnapshot(incoming);
+        setNow(Date.now());
+        setStatus('live');
+        try { localStorage.setItem(DRAW_CACHE_KEY, JSON.stringify(incoming)); }
+        catch { /* Storage restrictions must not block live data. */ }
       } catch {
-        // Storage restrictions must not prevent live data from being displayed.
+        if (active) setStatus('saved');
+      } finally {
+        window.clearTimeout(currentRequest.timer);
+        if (request === currentRequest) request = null;
       }
-    }).catch(() => {
-      if (active) setStatus('saved');
-    }).finally(() => window.clearTimeout(timeout));
-
+    };
+    const onReturn = () => { if (document.visibilityState === 'visible') void sync(); };
+    const onOnline = () => { if (document.visibilityState === 'visible') void sync(true); };
+    refreshAction.current = () => { void sync(true); };
+    window.addEventListener('focus', onReturn);
+    document.addEventListener('visibilitychange', onReturn);
+    window.addEventListener('online', onOnline);
+    void sync(true);
     return () => {
       active = false;
-      window.clearTimeout(timeout);
-      controller.abort();
+      refreshAction.current = () => {};
+      window.removeEventListener('focus', onReturn);
+      document.removeEventListener('visibilitychange', onReturn);
+      window.removeEventListener('online', onOnline);
+      if (request) {
+        window.clearTimeout(request.timer);
+        request.controller.abort();
+      }
     };
-  }, [refreshVersion]);
-
+  }, []);
   return { snapshot, status, refresh, freshness: snapshotFreshness(snapshot, now) };
 }
