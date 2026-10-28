@@ -104,7 +104,7 @@ test('native fetch retries when response headers arrive but body exceeds the dea
 });
 
 test('a complete-size response cannot hide a missing newly drawn period', () => {
-  const gapped = [{ ...baseline.draws[0], period: '26124', date: '2026-10-31' }, ...baseline.draws.slice(0, 49)];
+  const gapped = [{ ...baseline.draws[0], period: String(Number(baseline.draws[0].period) + 2), date: new Date(Date.parse(baseline.draws[0].date) + 4 * 86400000).toISOString().slice(0, 10) }, ...baseline.draws.slice(0, 49)];
   assert.equal(gapped.length, 50);
   assert.throws(() => assertCompatibleDraws(gapped, baseline.draws));
 });
