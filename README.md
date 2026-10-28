@@ -1,20 +1,37 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 大乐透号码助手
 
-# Run and deploy your AI Studio app
+React + TypeScript + Vite 应用，支持随机选号、规则筛选、生成记录及真实历史开奖统计。生成记录仅保存在当前浏览器中。
 
-This contains everything you need to run your app locally.
+## 本地运行与检查
 
-View your app in AI Studio: https://ai.studio/apps/11223574-7bac-4411-a134-d811ecf7f911
+需要 Node.js 20 或更新版本。
 
-## Run Locally
+```sh
+npm ci
+npm run dev
+npm test
+npm run lint
+npm run build
+```
 
-**Prerequisites:**  Node.js
+当前功能无需配置 Gemini API key。仓库中的环境变量示例是原始 AI Studio 模板的残留。
 
+## 官方开奖数据
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- 来源：[中国体彩网开奖公告](https://www.lottery.gov.cn/kj/kjlb.html?dlt)；采集其公开的大乐透历史接口（gameNo=85）。
+- 保持现有最近 **50 期**统计范围，列表显示最新 **5 期**；频次、遗漏和规则筛选的冷热依据共用这一数据集。
+- `src/data/official-draws.json` 是已采集的真实快照，包含采集时间、期号、日期、前区和后区号码。
+- `npm run data:update` 从官方接口更新快照。彩种、期号、日期、号码范围、重复号码和数据完整性均校验，失败或较旧的响应不会覆盖快照。
+- 官方接口的浏览器跨域响应不稳定，因此网页从本站 `data/official-draws.json` 加载数据。Vite 在开发时提供该文件、构建时将同一快照输出到该路径，无需额外后端。
+- 页面启动时核对站点数据，允许手动刷新，并在当前浏览器缓存验证过的开奖；加载失败则继续显示已保存的真实数据，明确提示并展示采集时间，不生成模拟开奖。
+- 完全离线时，前提是页面静态资源已加载；本项目尚未提供离线安装或 Service Worker。
+
+## GitHub Pages 部署与更新
+
+GitHub Actions 在推送到 main、手动触发和每日北京时间 **22:15** 时从官方采集数据，检查并构建后发布 Pages。采集失败会使任务失败，已部署页面继续可用；需在 Actions 查看失败原因并重试。
+
+发布前还会核对当前已发布站点的快照，防止官方暂时返回旧数据时把线上期号降级；线上基线核验失败会停止部署（首次接入数据路径返回 404 时除外）。
+
+定时采集产生的快照进入部署产物，不会自动提交回 Git。查看线上实际采集时间应以页面显示为准；本地快照可用 `npm run data:update` 更新。Actions 定时任务可能延迟，公共仓库长期无活动也可能被 GitHub 暂停，不能保证开奖后即时更新。
+
+页面所用规则评分仅用于组合筛选，不是中奖概率或预测准确率。

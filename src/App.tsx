@@ -8,6 +8,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { RefreshCw, Copy, History, Trash2, Check, Sparkles, BarChart3, LayoutGrid, Info, ArrowUpRight, Clock, Zap, Settings2, Trophy, Calendar, HelpCircle, X } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
 
+import { calculateDrawStats, OFFICIAL_SOURCE_URL } from './lib/draws.ts';
+import { useOfficialDraws } from './hooks/useOfficialDraws.ts';
+
 interface LottoSet {
   id: string;
   front: number[];
@@ -16,37 +19,6 @@ interface LottoSet {
   isSmart?: boolean;
   score?: number;
 }
-
-interface WinningDraw {
-  period: string;
-  date: string;
-  front: number[];
-  back: number[];
-}
-
-// Mock recent winning draws
-const RECENT_WINNING_DRAWS: WinningDraw[] = [
-  { period: '26032', date: '2026-03-21', front: [5, 12, 18, 24, 31], back: [4, 9] },
-  { period: '26031', date: '2026-03-18', front: [2, 8, 15, 22, 33], back: [1, 11] },
-  { period: '26030', date: '2026-03-14', front: [7, 14, 21, 28, 35], back: [6, 10] },
-  { period: '26029', date: '2026-03-11', front: [3, 11, 19, 27, 30], back: [5, 8] },
-  { period: '26027', date: '2026-03-07', front: [1, 9, 17, 25, 32], back: [2, 12] },
-];
-
-// Mock historical data (50 sets) for analysis demonstration
-const MOCK_HISTORY: Omit<LottoSet, 'id' | 'timestamp'>[] = Array.from({ length: 50 }, () => {
-  const front: number[] = [];
-  while (front.length < 5) {
-    const num = Math.floor(Math.random() * 35) + 1;
-    if (!front.includes(num)) front.push(num);
-  }
-  const back: number[] = [];
-  while (back.length < 2) {
-    const num = Math.floor(Math.random() * 12) + 1;
-    if (!back.includes(num)) back.push(num);
-  }
-  return { front: front.sort((a, b) => a - b), back: back.sort((a, b) => a - b) };
-});
 
 export default function App() {
   const [view, setView] = useState<'generator' | 'stats'>('generator');
@@ -57,49 +29,27 @@ export default function App() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showRules, setShowRules] = useState(false);
 
-  // Statistics Calculation (used for smart generation)
-  const stats = useMemo(() => {
-    const frontFreq = Array(36).fill(0);
-    const backFreq = Array(13).fill(0);
-    const frontOverdue = Array(36).fill(MOCK_HISTORY.length);
-
-    MOCK_HISTORY.forEach((draw, index) => {
-      draw.front.forEach(num => {
-        frontFreq[num]++;
-        if (frontOverdue[num] === MOCK_HISTORY.length) frontOverdue[num] = index;
-      });
-      draw.back.forEach(num => backFreq[num]++);
-    });
-
-    const frontData = Array.from({ length: 35 }, (_, i) => ({
-      number: i + 1,
-      freq: frontFreq[i + 1],
-      overdue: frontOverdue[i + 1],
-    }));
-
-    const backData = Array.from({ length: 12 }, (_, i) => ({
-      number: i + 1,
-      freq: backFreq[i + 1],
-    }));
-
-    return { frontData, backData, frontFreq, backFreq };
-  }, []);
+  const { snapshot: drawSnapshot, status: drawStatus, refresh: refreshDraws } = useOfficialDraws();
+  const stats = useMemo(() => calculateDrawStats(drawSnapshot.draws), [drawSnapshot.draws]);
+  const recentWinningDraws = drawSnapshot.draws.slice(0, 5);
 
   // Load history from localStorage
   useEffect(() => {
-    const savedHistory = localStorage.getItem('lotto_history');
-    if (savedHistory) {
-      try {
-        setHistory(JSON.parse(savedHistory));
-      } catch (e) {
-        console.error('Failed to parse history', e);
-      }
+    try {
+      const savedHistory = localStorage.getItem('lotto_history');
+      if (savedHistory) setHistory(JSON.parse(savedHistory));
+    } catch (e) {
+      console.warn('History storage is unavailable', e);
     }
   }, []);
 
   // Save history to localStorage
   useEffect(() => {
-    localStorage.setItem('lotto_history', JSON.stringify(history));
+    try {
+      localStorage.setItem('lotto_history', JSON.stringify(history));
+    } catch (e) {
+      console.warn('History storage is unavailable', e);
+    }
   }, [history]);
 
   // Quantitative Scoring Function
@@ -243,6 +193,26 @@ export default function App() {
             </div>
           </div>
         </header>
+
+        <section aria-label="开奖数据来源" className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-sm">
+          <div className="flex items-start justify-between gap-3">
+            <p className="min-w-0 self-center font-semibold text-gray-700">
+              数据来源：<a href={OFFICIAL_SOURCE_URL} target="_blank" rel="noreferrer" className="text-blue-700 underline underline-offset-2">中国体彩网</a>
+            </p>
+            <button onClick={refreshDraws} disabled={drawStatus === 'syncing'} className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-xl px-3 text-xs font-semibold text-blue-700 hover:bg-blue-100 disabled:opacity-50">
+              <RefreshCw aria-hidden="true" className={`h-3.5 w-3.5 ${drawStatus === 'syncing' ? 'animate-spin' : ''}`} />
+              刷新开奖
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-gray-600">最近 {drawSnapshot.draws.length} 期真实开奖 · {drawSnapshot.draws.at(-1)!.period}–{drawSnapshot.draws[0].period} 期</p>
+          <p className="mt-1 text-xs text-gray-600">最新第 {drawSnapshot.draws[0].period} 期 · {drawSnapshot.draws[0].date}</p>
+          <p className="mt-1 text-xs text-gray-500">官方采集时间：{new Date(drawSnapshot.fetchedAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false })}</p>
+          <p role="status" className={`mt-2 text-xs ${drawStatus === 'saved' ? 'text-amber-700' : 'text-gray-500'}`}>
+            {drawStatus === 'syncing' ? '正在核对站点开奖，当前展示已保存的真实数据。' :
+              drawStatus === 'live' ? '已读取站点最新数据，统计和筛选均使用以上真实开奖。' :
+              '暂未读取到站点更新，当前展示已保存的真实开奖，可重试刷新。'}
+          </p>
+        </section>
 
         <AnimatePresence mode="wait">
           {view === 'generator' ? (
@@ -482,10 +452,10 @@ export default function App() {
                     <Trophy className="w-5 h-5 mr-2 text-yellow-500" />
                     近 5 期开奖号码
                   </h3>
-                  <span className="text-[10px] text-gray-400 uppercase tracking-widest">Official Data</span>
+                  <a href={OFFICIAL_SOURCE_URL} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline underline-offset-2">中国体彩网</a>
                 </div>
                 <div className="space-y-3">
-                  {RECENT_WINNING_DRAWS.map((draw) => (
+                  {recentWinningDraws.map((draw) => (
                     <div key={draw.period} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl bg-gray-50/50 border border-gray-50 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center justify-between sm:justify-start gap-4 mb-3 sm:mb-0">
                         <div className="flex flex-col">
@@ -569,11 +539,11 @@ export default function App() {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-bold flex items-center">
                     <BarChart3 className="w-5 h-5 mr-2 text-blue-500" />
-                    前区号码出现频率 (最近50期)
+                    前区号码出现频率 (最近{drawSnapshot.draws.length}期)
                   </h3>
                   <div className="text-xs text-gray-400 flex items-center">
                     <Info className="w-3 h-3 mr-1" />
-                    基于模拟历史数据
+                    基于真实历史开奖
                   </div>
                 </div>
                 <div className="h-[300px] w-full">

@@ -2,13 +2,20 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
+  schedule:
+    # 22:15 Asia/Shanghai, after the usual evening draw.
+    - cron: '15 14 * * *'
 
 permissions:
   contents: read
   pages: write
   id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -18,11 +25,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
       - run: npm ci
+      - uses: actions/configure-pages@v5
+        id: pages
+      - run: npm run data:update
+        env:
+          DRAW_PUBLISHED_URL: ${{ steps.pages.outputs.base_url }}/data/official-draws.json
+      - run: npm test
+      - run: npm run lint
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'  # Vite 项目输出 dist
+          path: ./dist
 
   deploy:
     needs: build
@@ -32,3 +47,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/deploy-pages@v4
+        id: deployment
