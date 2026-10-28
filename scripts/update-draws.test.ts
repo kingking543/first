@@ -17,22 +17,25 @@ function fixture(latest: number) {
   };
 }
 
-async function runUpdate(current: number, official: number, published?: number, publishedStatus = 200, options: { allowSaved?: boolean; officialStatus?: number } = {}) {
+async function runUpdate(current: number, official: number, published?: number, publishedStatus = 200, options: { allowSaved?: boolean; officialStatus?: number; backupSuccess?: boolean; publishedConflict?: boolean } = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'dlt-updater-test-'));
   try {
     for (const path of ['scripts', 'src/lib', 'src/data']) await mkdir(join(dir, path), { recursive: true });
-    for (const path of ['scripts/update-draws.ts', 'src/lib/draws.ts']) await copyFile(new URL('../' + path, import.meta.url), join(dir, path));
+    for (const path of ['scripts/update-draws.ts', 'src/lib/draws.ts', 'scripts/fetch-draws.ts']) await copyFile(new URL('../' + path, import.meta.url), join(dir, path));
     await writeFile(join(dir, 'package.json'), '{"type":"module"}');
     await writeFile(join(dir, 'src/data/official-draws.json'), JSON.stringify(fixture(current)));
     const response = { success: true, errorCode: '0', value: { list: fixture(official).draws.map(d => ({
-      lotteryGameNum: '85', lotteryDrawNum: d.period, lotteryDrawTime: d.date,
+      verify: '1', lotteryGameNum: '85', lotteryDrawNum: d.period, lotteryDrawTime: d.date,
       lotteryDrawResult: [...d.front, ...d.back].map(n => String(n).padStart(2, '0')).join(' '),
     })) } };
-    await writeFile(join(dir, 'responses.json'), JSON.stringify({ official: response, published: fixture(published ?? current), publishedStatus, officialStatus: options.officialStatus ?? 200 }));
+    const online = fixture(published ?? current);
+    if (options.publishedConflict) online.draws.find(draw => draw.period === String(26000 + current))!.front = [6, 7, 8, 9, 10];
+    await writeFile(join(dir, 'responses.json'), JSON.stringify({ official: response, published: online, publishedStatus, officialStatus: options.officialStatus ?? 200, backupSuccess: options.backupSuccess ?? false }));
     await writeFile(join(dir, 'network.mjs'), `import {readFileSync} from 'node:fs';
 const data=JSON.parse(readFileSync(new URL('./responses.json',import.meta.url),'utf8'));
 globalThis.fetch=async url=>{
  if(String(url).includes('webapi.sporttery.cn')) return new Response(JSON.stringify(data.official),{status:data.officialStatus});
+ if(String(url).includes('fjtc.com.cn')) return new Response(JSON.stringify({code:0,data:data.official.value.list}),{status:data.backupSuccess?200:567});
  if(String(url)==='https://example.test/first/data/official-draws.json') return new Response(JSON.stringify(data.published),{status:data.publishedStatus});
  throw new Error('Unexpected external URL');
 };`);
@@ -77,19 +80,34 @@ test('updater allows the first deployment when no published snapshot exists', as
 });
 
 test('manual deployment can retain the newest verified snapshot if official fetch fails', async () => {
-  const result = await runUpdate(50, 54, 53, 200, { allowSaved: true, officialStatus: 503 });
+  const result = await runUpdate(50, 54, 53, 200, { allowSaved: true, officialStatus: 567 });
   assert.equal(result.exit, 0);
   assert.equal(result.saved.draws[0].period, '26053');
 });
 
 test('scheduled-style strict update still fails if official fetch fails', async () => {
-  const result = await runUpdate(50, 54, 53, 200, { officialStatus: 503 });
+  const result = await runUpdate(50, 54, 53, 200, { officialStatus: 567 });
   assert.equal(result.exit, 1);
   assert.equal(result.saved.draws[0].period, '26050');
 });
 
 test('saved-data fallback cannot bypass an unverifiable published baseline', async () => {
-  const result = await runUpdate(50, 54, 53, 503, { allowSaved: true, officialStatus: 503 });
+  const result = await runUpdate(50, 54, 53, 503, { allowSaved: true, officialStatus: 567 });
+  assert.equal(result.exit, 1);
+  assert.equal(result.saved.draws[0].period, '26050');
+});
+
+
+test('strict updater succeeds through official backup when central source is blocked', async () => {
+  const result = await runUpdate(50, 54, 53, 200, { officialStatus: 567, backupSuccess: true });
+  assert.equal(result.exit, 0);
+  assert.equal(result.saved.draws[0].period, '26054');
+  assert.equal(result.saved.source, 'fujian-sporttery');
+});
+
+
+test('saved-data mode cannot publish a baseline conflicting with locally verified history', async () => {
+  const result = await runUpdate(50, 54, 53, 200, { allowSaved: true, publishedConflict: true, officialStatus: 567 });
   assert.equal(result.exit, 1);
   assert.equal(result.saved.draws[0].period, '26050');
 });

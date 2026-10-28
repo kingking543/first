@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DrawLoadStatus } from '../lib/draws.ts';
 import bundledData from '../data/official-draws.json';
-import { DRAW_CACHE_KEY, DRAW_COUNT, fetchPublishedSnapshot, parseSnapshot, selectSnapshot } from '../lib/draws.ts';
+import { DRAW_CACHE_KEY, DRAW_COUNT, fetchPublishedSnapshot, parseSnapshot, selectSnapshot, snapshotFreshness } from '../lib/draws.ts';
 
 const bundledSnapshot = parseSnapshot(bundledData);
 
@@ -17,6 +17,11 @@ export function useOfficialDraws() {
   const [snapshot, setSnapshot] = useState(loadInitialSnapshot);
   const currentSnapshot = useRef(snapshot);
   const [status, setStatus] = useState<DrawLoadStatus>('syncing');
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const refresh = useCallback(() => setRefreshVersion(version => version + 1), []);
 
@@ -34,6 +39,7 @@ export function useOfficialDraws() {
       const selected = selectSnapshot(currentSnapshot.current, JSON.stringify(incoming));
       currentSnapshot.current = selected;
       setSnapshot(selected);
+      setNow(Date.now());
       setStatus('live');
       try {
         localStorage.setItem(DRAW_CACHE_KEY, JSON.stringify(selected));
@@ -51,5 +57,5 @@ export function useOfficialDraws() {
     };
   }, [refreshVersion]);
 
-  return { snapshot, status, refresh };
+  return { snapshot, status, refresh, freshness: snapshotFreshness(snapshot, now) };
 }

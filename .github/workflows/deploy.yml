@@ -5,8 +5,8 @@ on:
     branches: [main]
   workflow_dispatch:
   schedule:
-    # 22:15 Asia/Shanghai, after the usual evening draw.
-    - cron: '15 14 * * *'
+    # 22:15 Asia/Shanghai; 23:15 provides a recovery run.
+    - cron: '15 14,15 * * *'
 
 permissions:
   contents: read
@@ -20,6 +20,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,6 +38,8 @@ jobs:
             npm run data:update -- --allow-saved
           fi
         env:
+          # Avoid the short IPv4/IPv6 racing timeout on provincial official hosts.
+          NODE_OPTIONS: --no-network-family-autoselection --dns-result-order=ipv4first
           DRAW_PUBLISHED_URL: ${{ steps.pages.outputs.base_url }}/data/official-draws.json
       - run: npm test
       - run: npm run lint

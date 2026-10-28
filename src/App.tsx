@@ -15,13 +15,15 @@ import { useClipboard } from './hooks/useClipboard.ts';
 import { calculateDrawStats } from './lib/draws.ts';
 import { buildHotNumbers, formatLottoSet } from './lib/lotto.ts';
 import type { AppView } from './components/AppHeader.tsx';
+import type { AnalysisWindow } from './lib/statistics.ts';
 import type { LottoSet } from './lib/lotto.ts';
 
 const StatisticsView = lazy(() => import('./components/statistics/StatisticsView.tsx'));
 
 export default function App() {
   const [view, setView] = useState<AppView>('generator');
-  const { snapshot, status, refresh } = useOfficialDraws();
+  const [analysisWindow, setAnalysisWindow] = useState<AnalysisWindow>(50);
+  const { snapshot, status, refresh, freshness } = useOfficialDraws();
   const stats = useMemo(() => calculateDrawStats(snapshot.draws), [snapshot.draws]);
   const hotNumbers = useMemo(() => buildHotNumbers(stats.frontData), [stats.frontData]);
   const generator = useLottoGenerator(hotNumbers);
@@ -37,6 +39,11 @@ export default function App() {
     <div className="min-h-screen bg-[#F8F9FA] text-[#1A1A1A] font-sans selection:bg-blue-100 pb-20">
       <div className="max-w-3xl mx-auto px-4 py-8">
         <AppHeader view={view} onChange={setView} />
+        {freshness !== 'fresh' && (
+          <p role="alert" className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            {freshness === 'stale' ? '开奖数据已超过 36 小时未成功核验，可能尚未包含最新一期。当前展示已保存的真实开奖，刷新可检查站点是否已更新。' : '设备时间早于官方核验时间，暂时无法判断数据是否过期，请检查设备时间。'}
+          </p>
+        )}
         <AnimatePresence mode="wait">
           {view === 'generator' ? (
             <motion.div
@@ -66,7 +73,7 @@ export default function App() {
             >
               <StatisticsBoundary>
                 <Suspense fallback={<div role="status" className="min-h-[300px] rounded-3xl border border-gray-100 bg-white p-6 text-center text-sm text-gray-500">正在加载数据分析…</div>}>
-                  <StatisticsView stats={stats} drawCount={snapshot.draws.length} />
+                  <StatisticsView draws={snapshot.draws} windowSize={analysisWindow} onWindowChange={setAnalysisWindow} />
                 </Suspense>
               </StatisticsBoundary>
             </motion.div>

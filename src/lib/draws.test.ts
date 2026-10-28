@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
-import { calculateDrawStats, fetchOfficialSnapshot, parseOfficialHistory, parseSnapshot, selectSnapshot } from './draws.ts';
+import { calculateDrawStats, fetchOfficialSnapshot, parseOfficialHistory, parseSnapshot, selectSnapshot, snapshotFreshness, DRAW_SOURCES } from './draws.ts';
 
 const recent = { lotteryGameNum: '85', lotteryDrawNum: '26122', lotteryDrawTime: '2026-10-26', lotteryDrawResult: '02 14 21 22 24 02 12' };
 const previous = { lotteryGameNum: '85', lotteryDrawNum: '26121', lotteryDrawTime: '2026-10-24', lotteryDrawResult: '06 08 19 24 25 01 08' };
@@ -85,4 +85,29 @@ test('ignores caches that change the configured analysis window size', () => {
   const oversized = payload([recent, previous, { ...previous, lotteryDrawNum: '26120', lotteryDrawTime: '2026-10-21', lotteryDrawResult: '01 06 10 15 32 03 04' }]);
   oversized.fetchedAt = '2026-10-28T12:00:00.000Z';
   assert.equal(selectSnapshot(bundled, JSON.stringify(oversized)), bundled);
+});
+
+
+test('old snapshots keep central attribution and unknown sources are rejected', () => {
+  assert.equal(parseSnapshot(payload()).source, 'china-sporttery');
+  assert.equal(parseSnapshot({ ...payload(), source: 'fujian-sporttery' }).source, 'fujian-sporttery');
+  assert.equal(DRAW_SOURCES['fujian-sporttery'].name, '福建体彩网');
+  assert.throws(() => parseSnapshot({ ...payload(), source: 'untrusted' }));
+});
+
+test('freshness follows official verification time, including exact boundary and clock skew', () => {
+  const snapshot = parseSnapshot(payload()); const fetched = Date.parse(snapshot.fetchedAt);
+  assert.equal(snapshotFreshness(snapshot, fetched + 36 * 3600000 - 1), 'fresh');
+  assert.equal(snapshotFreshness(snapshot, fetched + 36 * 3600000), 'stale');
+  assert.equal(snapshotFreshness(snapshot, fetched - 5 * 60000), 'fresh');
+  assert.equal(snapshotFreshness(snapshot, fetched - 5 * 60000 - 1), 'clock-error');
+  assert.equal(snapshotFreshness(snapshot, fetched + 7 * 86400000), 'stale');
+});
+
+
+test('back-zone omission measures newest-first distance and caps unseen numbers at sample size', () => {
+  const stats=calculateDrawStats(parseOfficialHistory(response([recent,previous])));
+  assert.equal(stats.backData.find(row=>row.number===12)?.overdue,0);
+  assert.equal(stats.backData.find(row=>row.number===8)?.overdue,1);
+  assert.equal(stats.backData.find(row=>row.number===3)?.overdue,2);
 });

@@ -4,95 +4,40 @@
  */
 
 import { memo, useMemo } from 'react';
-import { ArrowUpRight, Clock, LayoutGrid, Sparkles } from 'lucide-react';
-import FrequencyChart from './FrequencyChart.tsx';
-import type { DrawStats } from '../../lib/draws.ts';
+import { ANALYSIS_WINDOWS, analyzeDrawWindow } from '../../lib/statistics.ts';
+import type { AnalysisWindow } from '../../lib/statistics.ts';
+import type { WinningDraw } from '../../lib/draws.ts';
+import NumberAnalysis from './NumberAnalysis.tsx';
 
-interface Props { stats: DrawStats; drawCount: number; }
-function StatisticsView({ stats, drawCount }: Props) {
-  const topFrequentFront = useMemo(() => [...stats.frontData].sort((a, b) => b.freq - a.freq).slice(0, 5), [stats.frontData]);
-  const topOverdueFront = useMemo(() => [...stats.frontData].sort((a, b) => b.overdue - a.overdue).slice(0, 5), [stats.frontData]);
+interface Props { draws: WinningDraw[]; windowSize: AnalysisWindow; onWindowChange: (count: AnalysisWindow) => void; }
+function StatisticsView({ draws, windowSize, onWindowChange }: Props) {
+  const analysis = useMemo(() => analyzeDrawWindow(draws, windowSize), [draws, windowSize]);
+  const newest = analysis.draws[0];
+  const oldest = analysis.draws.at(-1);
+  const count = analysis.draws.length;
+  if (!newest || !oldest) return <p role="status">暂无可分析的开奖记录。</p>;
   return (
     <>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-        <div className="flex items-center text-blue-600 mb-4">
-          <ArrowUpRight className="w-5 h-5 mr-2" />
-          <h3 className="font-bold">前区高频号码 (Top 5)</h3>
-        </div>
-        <div className="flex gap-2">
-          {topFrequentFront.map(d => (
-            <div key={d.number} className="flex flex-col items-center">
-              <div className="w-10 h-10 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center font-bold text-blue-700 mb-1">
-                {d.number < 10 ? `0${d.number}` : d.number}
-              </div>
-              <span className="text-[10px] text-gray-400">{d.freq}次</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-        <div className="flex items-center text-orange-600 mb-4">
-          <Clock className="w-5 h-5 mr-2" />
-          <h3 className="font-bold">前区遗漏最久 (Top 5)</h3>
-        </div>
-        <div className="flex gap-2">
-          {topOverdueFront.map(d => (
-            <div key={d.number} className="flex flex-col items-center">
-              <div className="w-10 h-10 rounded-full bg-orange-50 border border-orange-200 flex items-center justify-center font-bold text-orange-700 mb-1">
-                {d.number < 10 ? `0${d.number}` : d.number}
-              </div>
-              <span className="text-[10px] text-gray-400">{d.overdue}期</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-
-    <FrequencyChart stats={stats} drawCount={drawCount} />
-
-    {/* Heat Map Grid */}
-    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-      <h3 className="font-bold mb-6 flex items-center">
-        <LayoutGrid className="w-5 h-5 mr-2 text-red-500" />
-        前区号码热力分布
-      </h3>
-      <div className="grid grid-cols-5 sm:grid-cols-7 gap-2">
-        {stats.frontData.map(d => {
-          const intensity = Math.min(d.freq / 15, 1);
-          return (
-            <div
-              key={d.number}
-              className="aspect-square rounded-xl border border-gray-50 flex flex-col items-center justify-center transition-all hover:scale-105"
-              style={{ backgroundColor: `rgba(59, 130, 246, ${0.05 + intensity * 0.4})` }}
-            >
-              <span className="text-sm font-bold text-gray-800">{d.number < 10 ? `0${d.number}` : d.number}</span>
-              <span className="text-[8px] text-gray-500">{d.freq}次</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-
-    {/* Back Zone Stats */}
-    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-      <h3 className="font-bold mb-6 flex items-center">
-        <Sparkles className="w-5 h-5 mr-2 text-red-500" />
-        后区号码分析
-      </h3>
-      <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
-        {stats.backData.map(d => (
-          <div key={d.number} className="p-3 rounded-2xl bg-red-50/50 border border-red-100 flex flex-col items-center">
-            <span className="text-lg font-bold text-red-600">{d.number < 10 ? `0${d.number}` : d.number}</span>
-            <div className="flex flex-col items-center mt-1">
-              <span className="text-[10px] text-gray-500">频次: {d.freq}</span>
-            </div>
+      <section aria-label="统计范围" className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-bold text-gray-800">统计范围</h2>
+          <div role="group" aria-label="选择统计期数" className="inline-flex rounded-xl bg-gray-100 p-1">
+            {ANALYSIS_WINDOWS.map(size => (
+              <button key={size} aria-pressed={size === windowSize} onClick={() => onWindowChange(size)}
+                className={`min-h-11 rounded-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${size === windowSize ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:bg-gray-50'}`}>
+                近 {size} 期
+              </button>
+            ))}
           </div>
-        ))}
-      </div>
-    </div>
+        </div>
+        <p className="mt-3 text-sm font-medium text-gray-700">最近 {count} 期 · {oldest.period}–{newest.period} 期</p>
+        <p className="mt-1 text-xs leading-relaxed text-gray-500">{oldest.date} 至 {newest.date} · 截至第 {newest.period} 期</p>
+        <p className="mt-3 text-xs leading-relaxed text-gray-500">次数为所选范围内的出现次数。当前遗漏指距上次出现的期数，当期出现记 0 期；≥ 表示范围内未出现，实际遗漏可能更长。</p>
+      </section>
+      <NumberAnalysis zone="前区" rows={analysis.stats.frontData} count={count} />
+      <NumberAnalysis zone="后区" rows={analysis.stats.backData} count={count} />
+      <p className="px-1 text-xs leading-relaxed text-gray-500">前五摘要同值时按号码从小到大展示。以上为历史统计，不能据此判断下期中奖概率。</p>
     </>
   );
 }
-
 export default memo(StatisticsView);

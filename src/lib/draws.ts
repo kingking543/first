@@ -7,9 +7,15 @@ export interface WinningDraw {
 
 export interface DrawSnapshot {
   fetchedAt: string;
+  source?: DrawSourceId;
   draws: WinningDraw[];
 }
 
+export const DRAW_SOURCES = {
+  'china-sporttery': { name: '中国体彩网', url: 'https://www.lottery.gov.cn/kj/kjlb.html?dlt' },
+  'fujian-sporttery': { name: '福建体彩网', url: 'https://www.fjtc.com.cn/node_309522.htm?gameType=f' },
+} as const;
+export type DrawSourceId = keyof typeof DRAW_SOURCES;
 export const DRAW_COUNT = 50;
 export const DRAW_CACHE_KEY = 'dlt_official_draws_v1';
 export const OFFICIAL_SOURCE_URL = 'https://www.lottery.gov.cn/kj/kjlb.html?dlt';
@@ -78,7 +84,9 @@ export function parseSnapshot(payload: unknown): DrawSnapshot {
   if (typeof data.fetchedAt !== 'string' || !Number.isFinite(Date.parse(data.fetchedAt))) {
     throw new Error('开奖数据更新时间不合法');
   }
-  return { fetchedAt: data.fetchedAt, draws: normalizeDraws(data.draws) };
+  const source = data.source ?? 'china-sporttery';
+  if (source !== 'china-sporttery' && source !== 'fujian-sporttery') throw new Error('开奖数据来源不受信任');
+  return { fetchedAt: data.fetchedAt, source, draws: normalizeDraws(data.draws) };
 }
 
 export function selectSnapshot(current: DrawSnapshot, saved: string | null): DrawSnapshot {
@@ -99,23 +107,27 @@ export async function fetchOfficialSnapshot(signal?: AbortSignal, fetcher: typeo
   if (!response.ok) throw new Error(`官方开奖接口暂不可用 (HTTP ${response.status})`);
   const draws = parseOfficialHistory(await response.json());
   if (draws.length !== DRAW_COUNT) throw new Error('官方返回的历史开奖期数不足');
-  return { fetchedAt: new Date().toISOString(), draws };
+  return { fetchedAt: new Date().toISOString(), source: 'china-sporttery', draws };
 }
 
 export function calculateDrawStats(draws: WinningDraw[]) {
   const frontFreq = Array<number>(36).fill(0);
   const backFreq = Array<number>(13).fill(0);
   const frontOverdue = Array<number>(36).fill(draws.length);
+  const backOverdue = Array<number>(13).fill(draws.length);
   draws.forEach((draw, index) => {
     draw.front.forEach(number => {
       frontFreq[number]++;
       if (frontOverdue[number] === draws.length) frontOverdue[number] = index;
     });
-    draw.back.forEach(number => backFreq[number]++);
+    draw.back.forEach(number => {
+      backFreq[number]++;
+      if (backOverdue[number] === draws.length) backOverdue[number] = index;
+    });
   });
   return {
     frontData: Array.from({ length: 35 }, (_, i) => ({ number: i + 1, freq: frontFreq[i + 1], overdue: frontOverdue[i + 1] })),
-    backData: Array.from({ length: 12 }, (_, i) => ({ number: i + 1, freq: backFreq[i + 1] })),
+    backData: Array.from({ length: 12 }, (_, i) => ({ number: i + 1, freq: backFreq[i + 1], overdue: backOverdue[i + 1] })),
     frontFreq,
     backFreq,
   };
@@ -131,3 +143,9 @@ export async function fetchPublishedSnapshot(url: string, signal?: AbortSignal, 
 
 export type DrawStats = ReturnType<typeof calculateDrawStats>;
 export type DrawLoadStatus = 'syncing' | 'live' | 'saved';
+
+export function snapshotFreshness(snapshot: DrawSnapshot, now = Date.now()): 'fresh' | 'stale' | 'clock-error' {
+  const age = now - Date.parse(snapshot.fetchedAt);
+  if (age < -5 * 60000) return 'clock-error';
+  return age >= 36 * 3600000 ? 'stale' : 'fresh';
+}
