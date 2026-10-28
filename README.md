@@ -12,9 +12,10 @@ npm run dev
 npm test
 npm run lint
 npm run build
+npm run check:bundle
 ```
 
-当前功能无需配置 Gemini API key。仓库中的环境变量示例是原始 AI Studio 模板的残留。
+当前功能无需 API 密钥或环境变量。
 
 ## 官方开奖数据
 
@@ -35,3 +36,14 @@ GitHub Actions 在推送到 main、手动触发和每日北京时间 **22:15** �
 定时采集产生的快照进入部署产物，不会自动提交回 Git。查看线上实际采集时间应以页面显示为准；本地快照可用 `npm run data:update` 更新。Actions 定时任务可能延迟，公共仓库长期无活动也可能被 GitHub 暂停，不能保证开奖后即时更新。
 
 页面所用规则评分仅用于组合筛选，不是中奖概率或预测准确率。
+
+## 代码结构与性能检查
+
+- `src/App.tsx` 组合页面、官方数据和状态钩子；`src/components/` 按生成结果、历史记录、开奖列表及来源信息等职责拆分。
+- `src/lib/lotto.ts` 存放可独立测试的选号、评分、历史校验和复制格式。热号排名随统计变化计算一次，候选评分使用 Set 查找。
+- `useLottoGenerator` 惰性读取原有 `lotto_history`，保留有效记录并限制 50 条，避免 StrictMode 首次保存覆盖历史；生成与复制定时器在卸载时清理。
+- 统计页通过 React.lazy / Suspense 按需加载，图表不进入首页下载；首次加载有占位，模块失败有提示，选号页仍可使用。
+- `npm run build` 生成构建清单，`npm run check:bundle` 检查首页 JavaScript < 400 KB、gzip < 140 KB、各分块 < 500 KB，CI 同样执行预算检查。
+- TypeScript 启用 strict 和未使用项检查，显式声明 React 类型；移除未使用的 AI SDK、Express、dotenv 和 autoprefixer。
+
+分析模块加载失败时，“重新加载”会刷新页面后重试；生成记录仍保存在浏览器中。

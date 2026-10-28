@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { DrawLoadStatus } from '../lib/draws.ts';
 import bundledData from '../data/official-draws.json';
 import { DRAW_CACHE_KEY, DRAW_COUNT, fetchPublishedSnapshot, parseSnapshot, selectSnapshot } from '../lib/draws.ts';
 
@@ -15,7 +16,7 @@ function loadInitialSnapshot() {
 export function useOfficialDraws() {
   const [snapshot, setSnapshot] = useState(loadInitialSnapshot);
   const currentSnapshot = useRef(snapshot);
-  const [status, setStatus] = useState<'syncing' | 'live' | 'saved'>('syncing');
+  const [status, setStatus] = useState<DrawLoadStatus>('syncing');
   const [refreshVersion, setRefreshVersion] = useState(0);
   const refresh = useCallback(() => setRefreshVersion(version => version + 1), []);
 

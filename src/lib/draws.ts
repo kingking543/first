@@ -128,3 +128,6 @@ export async function fetchPublishedSnapshot(url: string, signal?: AbortSignal, 
   if (snapshot.draws.length !== DRAW_COUNT) throw new Error('站点历史开奖期数不完整');
   return snapshot;
 }
+
+export type DrawStats = ReturnType<typeof calculateDrawStats>;
+export type DrawLoadStatus = 'syncing' | 'live' | 'saved';
