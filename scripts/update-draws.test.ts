@@ -17,7 +17,7 @@ function fixture(latest: number) {
   };
 }
 
-async function runUpdate(current: number, official: number, published?: number, publishedStatus = 200) {
+async function runUpdate(current: number, official: number, published?: number, publishedStatus = 200, options: { allowSaved?: boolean; officialStatus?: number } = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'dlt-updater-test-'));
   try {
     for (const path of ['scripts', 'src/lib', 'src/data']) await mkdir(join(dir, path), { recursive: true });
@@ -28,17 +28,17 @@ async function runUpdate(current: number, official: number, published?: number, 
       lotteryGameNum: '85', lotteryDrawNum: d.period, lotteryDrawTime: d.date,
       lotteryDrawResult: [...d.front, ...d.back].map(n => String(n).padStart(2, '0')).join(' '),
     })) } };
-    await writeFile(join(dir, 'responses.json'), JSON.stringify({ official: response, published: fixture(published ?? current), publishedStatus }));
+    await writeFile(join(dir, 'responses.json'), JSON.stringify({ official: response, published: fixture(published ?? current), publishedStatus, officialStatus: options.officialStatus ?? 200 }));
     await writeFile(join(dir, 'network.mjs'), `import {readFileSync} from 'node:fs';
 const data=JSON.parse(readFileSync(new URL('./responses.json',import.meta.url),'utf8'));
 globalThis.fetch=async url=>{
- if(String(url).includes('webapi.sporttery.cn')) return new Response(JSON.stringify(data.official));
+ if(String(url).includes('webapi.sporttery.cn')) return new Response(JSON.stringify(data.official),{status:data.officialStatus});
  if(String(url)==='https://example.test/first/data/official-draws.json') return new Response(JSON.stringify(data.published),{status:data.publishedStatus});
  throw new Error('Unexpected external URL');
 };`);
     const result = spawnSync(process.execPath, [
       '--import', fileURLToPath(new URL('../node_modules/tsx/dist/loader.mjs', import.meta.url)),
-      '--import', join(dir, 'network.mjs'), join(dir, 'scripts/update-draws.ts'),
+      '--import', join(dir, 'network.mjs'), join(dir, 'scripts/update-draws.ts'), ...(options.allowSaved ? ['--allow-saved'] : []),
     ], { cwd: dir, encoding: 'utf8', env: { ...process.env, DRAW_PUBLISHED_URL: published === undefined ? '' : 'https://example.test/first/data/official-draws.json' } });
     return { exit: result.status, saved: JSON.parse(await readFile(join(dir, 'src/data/official-draws.json'), 'utf8')) };
   } finally {
@@ -74,4 +74,22 @@ test('updater allows the first deployment when no published snapshot exists', as
   const result = await runUpdate(50, 54, 53, 404);
   assert.equal(result.exit, 0);
   assert.equal(result.saved.draws[0].period, '26054');
+});
+
+test('manual deployment can retain the newest verified snapshot if official fetch fails', async () => {
+  const result = await runUpdate(50, 54, 53, 200, { allowSaved: true, officialStatus: 503 });
+  assert.equal(result.exit, 0);
+  assert.equal(result.saved.draws[0].period, '26053');
+});
+
+test('scheduled-style strict update still fails if official fetch fails', async () => {
+  const result = await runUpdate(50, 54, 53, 200, { officialStatus: 503 });
+  assert.equal(result.exit, 1);
+  assert.equal(result.saved.draws[0].period, '26050');
+});
+
+test('saved-data fallback cannot bypass an unverifiable published baseline', async () => {
+  const result = await runUpdate(50, 54, 53, 503, { allowSaved: true, officialStatus: 503 });
+  assert.equal(result.exit, 1);
+  assert.equal(result.saved.draws[0].period, '26050');
 });

@@ -96,7 +96,7 @@ export function selectSnapshot(current: DrawSnapshot, saved: string | null): Dra
 
 export async function fetchOfficialSnapshot(signal?: AbortSignal, fetcher: typeof fetch = fetch): Promise<DrawSnapshot> {
   const response = await fetcher(OFFICIAL_HISTORY_URL, { signal, credentials: 'omit', cache: 'no-store' });
-  if (!response.ok) throw new Error('官方开奖接口暂不可用');
+  if (!response.ok) throw new Error(`官方开奖接口暂不可用 (HTTP ${response.status})`);
   const draws = parseOfficialHistory(await response.json());
   if (draws.length !== DRAW_COUNT) throw new Error('官方返回的历史开奖期数不足');
   return { fetchedAt: new Date().toISOString(), draws };

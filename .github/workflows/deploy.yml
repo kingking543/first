@@ -29,7 +29,13 @@ jobs:
       - run: npm ci
       - uses: actions/configure-pages@v5
         id: pages
-      - run: npm run data:update
+      - name: Prepare official draw data
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            npm run data:update
+          else
+            npm run data:update -- --allow-saved
+          fi
         env:
           DRAW_PUBLISHED_URL: ${{ steps.pages.outputs.base_url }}/data/official-draws.json
       - run: npm test
