@@ -71,3 +71,11 @@ Runner 的采集步骤使用 `--no-network-family-autoselection --dns-result-ord
 规则符合度为组合形态75分、历史参考5分和组间分散20分的四舍五入总分。组间分散按最终整批计算，单组按20分计。分数表示规则符合程度，不是中奖概率。新记录保存scoreVersion2，历史分数保持原值并标注旧规则，不随历史开奖变化重新计算。
 
 旧回测已冻结原算法于scripts/research/baseline-lotto.ts；新逻辑工程检查与原报告分开记录，不宣称未来命中优势。
+
+## Vercel 开奖数据同步
+
+Vercel 使用 `vercel.json` 指定的 `npm run build -- --mode vercel` 构建。该模式保留页面内的已核验备份，但不输出 `/data/official-draws.json` 静态文件，避免文件系统优先级遮盖在线转发。普通构建和 GitHub Pages 继续输出原静态快照。
+
+Vercel 将同域 `/data/official-draws.json` 请求转发到 GitHub Pages 定时更新的正式快照，浏览器无需直接访问 GitHub。转发禁用浏览器与 Vercel CDN 缓存，保留页面请求中的版本参数；原有50期校验、防期号降级、12秒超时和失败保留备份继续生效。快照的官方核验时间保持原值。
+
+“刷新开奖”检查最近一次已发布的真实数据，不会即时启动官方采集。后续官方采集仍由 GitHub Actions 完成；上游未更新或网络失败时，Vercel 不会虚构更新。首次启用这项配置需要重新部署 Vercel，之后数据更新无需重新构建 Vercel 页面。

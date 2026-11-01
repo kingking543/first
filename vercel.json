@@ -1,0 +1,33 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build -- --mode vercel",
+  "rewrites": [
+    {
+      "source": "/data/official-draws.json",
+      "destination": "https://kingking543.github.io/first/data/official-draws.json"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/data/official-draws.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Vercel-CDN-Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "x-vercel-enable-rewrite-caching",
+          "value": "0"
+        }
+      ]
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import path from 'path';
 import {readFileSync} from 'node:fs';
 import {defineConfig} from 'vite';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: './',
   plugins: [react(), tailwindcss(), {
     name: 'official-draws-snapshot',
@@ -20,7 +20,11 @@ export default defineConfig({
       });
     },
     generateBundle() {
-      this.emitFile({ type: 'asset', fileName: 'data/official-draws.json', source: readFileSync(path.resolve(__dirname, 'src/data/official-draws.json')) });
+      // Vercel proxies this path to the regularly updated published snapshot.
+      // A static file at the same path would take precedence over that rewrite.
+      if (mode !== 'vercel') {
+        this.emitFile({ type: 'asset', fileName: 'data/official-draws.json', source: readFileSync(path.resolve(__dirname, 'src/data/official-draws.json')) });
+      }
     },
   }],
   resolve: {
@@ -31,4 +35,4 @@ export default defineConfig({
   server: {
     hmr: process.env.DISABLE_HMR !== 'true',
   },
-});
+}));
