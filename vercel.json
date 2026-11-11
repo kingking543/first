@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/data/official-draws.json",
-      "destination": "https://kingking543.github.io/first/data/official-draws.json"
+      "destination": "/api/official-draws"
     }
   ],
   "headers": [
@@ -29,5 +29,11 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/official-draws.ts": {
+      "maxDuration": 30,
+      "includeFiles": "src/data/official-draws.json"
+    }
+  }
 }

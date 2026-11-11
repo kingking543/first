@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
       });
     },
     generateBundle() {
-      // Vercel proxies this path to the regularly updated published snapshot.
+      // Vercel routes this path to the live official verification function.
       // A static file at the same path would take precedence over that rewrite.
       if (mode !== 'vercel') {
         this.emitFile({ type: 'asset', fileName: 'data/official-draws.json', source: readFileSync(path.resolve(__dirname, 'src/data/official-draws.json')) });

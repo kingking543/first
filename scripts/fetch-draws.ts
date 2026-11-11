@@ -1,5 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises';
-import { DRAW_COUNT, OFFICIAL_HISTORY_URL, parseOfficialHistory } from '../src/lib/draws.ts';
+import { DRAW_COUNT, OFFICIAL_HISTORY_URL, parseOfficialHistory, assertCompatibleDraws } from '../src/lib/draws.ts';
 import type { DrawSnapshot, WinningDraw } from '../src/lib/draws.ts';
 
 export const FUJIAN_HISTORY_URL = 'https://www.fjtc.com.cn/data_api/lottery?type=dlt&page=1&limit=50&so_start=&so_end=';
@@ -63,22 +63,7 @@ export function parseFujianHistory(payload: unknown): WinningDraw[] {
   return draws;
 }
 
-export function assertCompatibleDraws(incoming: WinningDraw[], current: WinningDraw[]) {
-  if (incoming.length !== DRAW_COUNT || Number(incoming[0].period) < Number(current[0].period)) throw new Error('官方响应早于已保存的开奖或期数不足');
-  for (let i = 1; i < incoming.length; i++) {
-    const newer = incoming[i - 1].period;
-    const older = incoming[i].period;
-    const sameYear = newer.slice(0, 2) === older.slice(0, 2);
-    if (sameYear ? Number(newer) - Number(older) !== 1 : Number(newer.slice(0, 2)) - Number(older.slice(0, 2)) !== 1 || newer.slice(2) !== '001') throw new Error('官方历史开奖期号不连续');
-  }
-  const byPeriod = new Map(incoming.map(draw => [draw.period, draw]));
-  const oldest = Number(incoming.at(-1)!.period);
-  for (const saved of current) {
-    if (Number(saved.period) < oldest) continue;
-    const draw = byPeriod.get(saved.period);
-    if (!draw || draw.date !== saved.date || String(draw.front) !== String(saved.front) || String(draw.back) !== String(saved.back)) throw new Error(`第 ${saved.period} 期官方响应与已核验记录不一致`);
-  }
-}
+export { assertCompatibleDraws } from '../src/lib/draws.ts';
 
 export async function fetchVerifiedDraws(current: DrawSnapshot, options: RequestOptions = {}): Promise<DrawSnapshot> {
   const sources = [

@@ -31,16 +31,17 @@ export function useOfficialDraws() {
       if (!active || request || (!force && Date.now() - lastAttempt < 5000)) return;
       lastAttempt = Date.now();
       const controller = new AbortController();
-      const currentRequest = { controller, timer: window.setTimeout(() => controller.abort(), 12000) };
+      const currentRequest = { controller, timer: window.setTimeout(() => controller.abort(), 20000) };
       request = currentRequest;
       setStatus('syncing');
       try {
-        const incoming = await syncPublishedSnapshot(currentSnapshot.current, document.baseURI, controller.signal);
+        const result = await syncPublishedSnapshot(currentSnapshot.current, document.baseURI, controller.signal);
         if (!active) return;
+        const incoming = result.snapshot;
         currentSnapshot.current = incoming;
         setSnapshot(incoming);
         setNow(Date.now());
-        setStatus('live');
+        setStatus(result.verification === 'official' ? 'live' : 'saved');
         try { localStorage.setItem(DRAW_CACHE_KEY, JSON.stringify(incoming)); }
         catch { /* Storage restrictions must not block live data. */ }
       } catch {

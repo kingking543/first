@@ -1,0 +1,9 @@
+# Live official draw refresh
+
+Approved continuation: fix repeated stale draw updates by making refresh query official sources through a server endpoint; snapshot is fallback, not a new verification. Keep existing UI entry point and source attribution. Implement and publish this synchronization fix, then verify real deployed browser→API→official data→UI flow. Uncommitted score research remains separate.
+
+One Node Vercel Function at api/official-draws.ts; existing /data/official-draws.json rewrites to it, retaining old-client JSON compatibility. In parallel fetch central, approved Fujian and the Pages backup, bounded to8seconds, with a shorter3second backup deadline. Choose the newest compatible official50draw result; reject conflicting sources/overlapping changes. Failure returns the best validated backup with original fetchedAt and verification=snapshot; success returns verification=official. No DB, secrets, in-process data cache or scheduled-job dependency for live requests.
+
+Pages and localhost request Vercel's public CORS endpoint; their own/static Pages snapshot remains a client fallback if the endpoint is unavailable. Vercel/custom domains use their same-origin path. Client keeps newer data, rejects conflicts/gaps, and distinguishes official verification from snapshot loading. Hook deadline20seconds covers bounded server work plus connection time. Existing focus coalescing, manual refresh, cache versioning and no-store remain.
+
+Named Web Request/Response handler exports, Node runtime,30second function ceiling and explicit inclusion of bundled backup JSON. Public GET/HEAD/OPTIONS only; upstream URLs fixed. Generation/statistics logic unchanged. Validate older primary/newer secondary, both down, source disagreement, newer local cache, failed/aborted requests and original timestamps; deployment is not complete until the Vercel runtime and Pages cross-origin path are observed working.
