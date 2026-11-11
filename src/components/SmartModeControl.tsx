@@ -22,7 +22,7 @@ export default function SmartModeControl({ isSmartMode, onToggle }: Props) {
             <div className="flex items-center gap-1.5">
               <h3 className="font-bold text-sm sm:text-base">量化增强模式</h3>
               <button
-                aria-label="查看量化筛选规则"
+                aria-label="查看量化生成与评分规则"
                 aria-expanded={showRules}
                 aria-controls={rulesId}
                 onClick={() => setShowRules(!showRules)}
@@ -31,7 +31,7 @@ export default function SmartModeControl({ isSmartMode, onToggle }: Props) {
                 <HelpCircle className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-[10px] sm:text-xs text-gray-400">综合组合形态与组间分散，分数表示规则符合度</p>
+            <p className="text-[10px] sm:text-xs text-gray-400">五组自动分散，增加至少一注中奖机会</p>
           </div>
         </div>
         <button
@@ -56,16 +56,18 @@ export default function SmartModeControl({ isSmartMode, onToggle }: Props) {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center text-blue-400">
                 <Settings2 className="w-4 h-4 mr-2" />
-                <span className="text-xs font-bold uppercase tracking-wider">量化筛选逻辑</span>
+                <span className="text-xs font-bold uppercase tracking-wider">生成与评分规则</span>
               </div>
-              <button aria-label="关闭筛选规则" onClick={() => setShowRules(false)} className="text-gray-500">
+              <button aria-label="关闭生成与评分规则" onClick={() => setShowRules(false)} className="text-gray-500">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="grid grid-cols-1 gap-4 text-xs">
+              <p className="text-gray-300 leading-relaxed"><span className="text-white font-semibold">生成方式：</span>同批五组的前区、后区号码各自不重复；生成一组时仍为均匀随机。跨次生成允许重复。</p>
+              <p className="text-gray-300 leading-relaxed"><span className="text-white font-semibold">评分说明：</span>号码生成后再计算以下规则符合度，形态与历史参考不参与选号，也不会按分数筛掉组合。</p>
               <div className="flex items-start gap-3">
                 <div className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-[10px]">1</div>
-                <p className="text-gray-300 leading-relaxed"><span className="text-white font-semibold">和值控制：</span>最多30分：前区和值越接近90，得分越高，偏离时逐步降低，不锁定固定区间。</p>
+                <p className="text-gray-300 leading-relaxed"><span className="text-white font-semibold">和值形态：</span>最多30分：前区和值越接近90，得分越高，偏离时逐步降低，不锁定固定区间。</p>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-[10px]">2</div>
@@ -73,7 +75,7 @@ export default function SmartModeControl({ isSmartMode, onToggle }: Props) {
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-[10px]">3</div>
-                <p className="text-gray-300 leading-relaxed"><span className="text-white font-semibold">历史参考：</span>最多5分：参考最近50期前十高频号码，包含1–3个得5分，其余得2分，不再强制包含热号。</p>
+                <p className="text-gray-300 leading-relaxed"><span className="text-white font-semibold">历史参考：</span>最多5分：参考最近50期前十高频号码，包含1–3个得5分，其余得2分，仅用于评分，不影响选号。</p>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-[10px]">4</div>
@@ -83,7 +85,7 @@ export default function SmartModeControl({ isSmartMode, onToggle }: Props) {
                 <div className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 font-bold text-[10px]">5</div>
                 <p className="text-gray-300 leading-relaxed"><span className="text-white font-semibold">组间分散：</span>最多20分：每组与其余组合的最大前区、后区重叠数，每个各扣3分，最低0分；生成一组时此项按20分计。</p>
               </div>
-              <p className="text-gray-400 leading-relaxed">总分四舍五入为0–100分，只表示规则符合度，不是中奖概率。多组统筹选择以减少重叠，不以满分作为生成门槛。</p>
+              <p className="text-gray-400 leading-relaxed">总分四舍五入为0–100分，只表示规则符合度，不是中奖概率。完全分散提高同预算五组至少一注中任意奖的概率，不提高单注或头奖概率。</p>
             </div>
           </motion.div>
         )}

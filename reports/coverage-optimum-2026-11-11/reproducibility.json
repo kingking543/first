@@ -1,0 +1,18 @@
+{
+  "generatedAt": "2026-11-11T17:12:52.120175+08:00",
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "command": "PYTHONDONTWRITEBYTECODE=1 python scripts/research/verify-five-coverage-optimum.py",
+  "inputHashes": {
+    "reports/backtest-2026-11-11/theory-batches.json": "ba9acf4bebca9e5127d911bcfc77518c2574634da3fbb23ddba8823332472263",
+    "reports/backtest-2026-11-11/exact-probabilities.json": "72d88d6502111afba640106e127b6ce310a6d2842b7b3699c03234ac992e82ba",
+    "scripts/research/backtest_v3_exact.py": "02e2d9ec17979880deb38dbcba5a9ef42a5887810d38d2898c070bccd12351ee"
+  },
+  "files": {
+    "scripts/research/verify-five-coverage-optimum.py": "2ff2646700443038ab82d537ec038513ead497d7edb25df3c02835f83bea74cf",
+    "scripts/research/backtest_v3_exact.py": "02e2d9ec17979880deb38dbcba5a9ef42a5887810d38d2898c070bccd12351ee",
+    "reports/coverage-optimum-2026-11-11/certificate.json": "61b1a7ae7abb7be8cb956844bff776525603a0c06144c928b58d1aea7a6ca8fa",
+    "reports/coverage-optimum-2026-11-11/report.md": "3e75504ec03311f67ce2afcf53b91a2aa4452c2506ead02f3a044f86f416abc4",
+    "reports/coverage-optimum-2026-11-11/report.html": "bb406b8631b762cee7cb445e49f31a92c174af4435c4ceaab27bded53cea70c1"
+  }
+}

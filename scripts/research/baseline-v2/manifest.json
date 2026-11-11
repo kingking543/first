@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "30a30b12865ce3c4ba2b34b5161fef2ad665def4",
+  "originalSourcePrefix": "src/lib/",
+  "files": {
+    "lotto.ts": "64774625ef01bce6d404fa35ccd09696b6f630f71fb95ecf1ba33339728e82cb",
+    "quantified.ts": "23ec4d2c321b2033bed35de584c619edbb3c7a929776567caafa91164a39b105",
+    "number-sampling.ts": "8384791a7f6a9576592e3aa94f0083189498be0b99b874c2071618a7fe31408b"
+  }
+}

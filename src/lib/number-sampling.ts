@@ -3,11 +3,15 @@ export function unitRandom(random: () => number) {
   if (!Number.isFinite(value) || value < 0 || value >= 1) throw new RangeError('Random value must be in [0, 1)');
   return value;
 }
-export function sampleNumbers(count: number, maximum: number, random: () => number): number[] {
+export function sampleNumbersInOrder(count: number, maximum: number, random: () => number): number[] {
   const pool = Array.from({ length: maximum }, (_, i) => i + 1);
   for (let i = 0; i < count; i++) {
     const target = i + Math.floor(unitRandom(random) * (maximum - i));
     [pool[i], pool[target]] = [pool[target], pool[i]];
   }
-  return pool.slice(0, count).sort((a, b) => a - b);
+  return pool.slice(0, count);
+}
+
+export function sampleNumbers(count: number, maximum: number, random: () => number): number[] {
+  return sampleNumbersInOrder(count, maximum, random).sort((a, b) => a - b);
 }

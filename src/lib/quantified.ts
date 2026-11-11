@@ -1,4 +1,4 @@
-import { sampleNumbers, unitRandom } from './number-sampling.ts';
+import { sampleNumbers, sampleNumbersInOrder, unitRandom } from './number-sampling.ts';
 import type { LottoSet } from './lotto.ts';
 type Numbers = Pick<LottoSet, 'front' | 'back'>;
 const overlap = (left: number[], right: number[]) => left.filter(number => right.includes(number)).length;
@@ -22,6 +22,17 @@ export function scoreRuleConformity(set: Numbers, hot: ReadonlySet<number>, othe
 const key = (set: Numbers) => set.front.join(',') + '|' + set.back.join(',');
 
 export function selectQuantified(count: number, hot: ReadonlySet<number>, random: () => number): Numbers[] {
+  // Up to six tickets fit both pools without sharing any number within a zone.
+  if (count <= 6) {
+    const front = sampleNumbersInOrder(count * 5, 35, random);
+    const back = sampleNumbersInOrder(count * 2, 12, random);
+    // Partition the random order first; sorting the whole pool would bias early tickets.
+    return Array.from({ length: count }, (_, i) => ({
+      front: front.slice(i * 5, i * 5 + 5).sort((a, b) => a - b),
+      back: back.slice(i * 2, i * 2 + 2).sort((a, b) => a - b),
+    }));
+  }
+  // Compatibility for API batches of 7–50; the UI only requests one or five.
   const unique = new Map<string, Numbers>();
   for (let i = 0; i < Math.max(160, count * 48); i++) {
     const set = { front: sampleNumbers(5, 35, random), back: sampleNumbers(2, 12, random) };

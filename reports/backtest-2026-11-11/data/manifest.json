@@ -1,0 +1,55 @@
+{
+  "fetchedAt": "2026-11-11T07:50:58.977Z",
+  "sources": [
+    {
+      "name": "central-latest100",
+      "url": "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&pageSize=100&isVerify=1&pageNo=1",
+      "rows": 100,
+      "rawSha256": "c0243fea7b81b7ceb65e461cc07f3abf54754f49c86215b67670db38ad8f7247"
+    },
+    {
+      "name": "fujian-latest50",
+      "url": "https://www.fjtc.com.cn/data_api/lottery?type=dlt&page=1&limit=50&so_start=&so_end=",
+      "rows": 50,
+      "rawSha256": "ecad9612a8868b5469820abfb05c4f20423707f967044fc12d9ce3fa53c5f6e3"
+    },
+    {
+      "name": "published-crosscheck",
+      "url": "https://first-wine-iota.vercel.app/data/official-draws.json",
+      "rows": 50,
+      "rawSha256": "8a03fe27353dd0bfe340561e902bfe73eea97e986f1520f81900272fb129cb76"
+    }
+  ],
+  "originalManifest": "../../backtest-2026-10-28/data/manifest.json",
+  "originalManifestSha256": "d29b48900dc93c2f42d73f0c4f3c73a8a44bfcce300914cb24b1b096b9893c96",
+  "originalArchivedRecords": 1100,
+  "originalUsedRecords": 1050,
+  "matchedCentralArchive": 95,
+  "matchedFujian": 50,
+  "matchedPublished": 50,
+  "normalizedRecords": 1055,
+  "targets": 1005,
+  "forwardTargets": [
+    {
+      "period": "26124",
+      "date": "2026-10-31"
+    },
+    {
+      "period": "26125",
+      "date": "2026-11-02"
+    },
+    {
+      "period": "26126",
+      "date": "2026-11-04"
+    },
+    {
+      "period": "26127",
+      "date": "2026-11-07"
+    },
+    {
+      "period": "26128",
+      "date": "2026-11-09"
+    }
+  ],
+  "historySha256": "e59ad6890ceee1968a682be44019de3010564e368d65c1913b3813d604b33dcb"
+}
